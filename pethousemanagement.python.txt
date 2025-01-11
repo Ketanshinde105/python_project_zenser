@@ -1,0 +1,213 @@
+--program for create tables/database in the mysql
+
+CREATE DATABASE pethouse;
+
+use pethouse;
+
+
+CREATE TABLE owners (
+    owner_id INT(10) PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone_number VARCHAR(15),
+    address VARCHAR(255),
+    registration_date DATE DEFAULT CURDATE()
+);
+
+CREATE TABLE pets (
+    pet_id INT(10) PRIMARY KEY AUTO_INCREMENT,
+    pet_name VARCHAR(50) NOT NULL,
+    species VARCHAR(50),
+    breed VARCHAR(50),
+    age INT(3),
+    owner_id INT(10),
+    admission_date DATE DEFAULT CURDATE(),
+    FOREIGN KEY (owner_id) REFERENCES owners(owner_id)
+);
+
+CREATE TABLE veterinarians (
+    vet_id INT(10) PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    specialization VARCHAR(100),
+    phone_number VARCHAR(15)
+);
+
+CREATE TABLE pet_care (
+    care_id INT(10) PRIMARY KEY AUTO_INCREMENT,
+    pet_id INT(10),
+    care_type VARCHAR(50),  -- e.g., "Feeding", "Grooming", "Checkup"
+    care_date DATE DEFAULT CURDATE(),
+    care_notes VARCHAR(255),
+    FOREIGN KEY (pet_id) REFERENCES pets(pet_id)
+);
+
+CREATE TABLE appointments (
+    appointment_id INT(10) PRIMARY KEY AUTO_INCREMENT,
+    pet_id INT(10),
+    vet_id INT(10),
+    appointment_date DATE,
+    reason VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'Scheduled',  -- Scheduled, Completed, Cancelled
+    FOREIGN KEY (pet_id) REFERENCES pets(pet_id),
+    FOREIGN KEY (vet_id) REFERENCES veterinarians(vet_id)
+);
+
+-- Insert owners
+INSERT INTO owners (owner_id, first_name, last_name, email, phone_number, address) 
+VALUES (1, 'John', 'Doe', 'john.doe@example.com', '1234567890', '123 Elm St');
+INSERT INTO owners (owner_id, first_name, last_name, email, phone_number, address) 
+VALUES (2, 'Jane', 'Smith', 'jane.smith@example.com', '0987654321', '456 Oak St');
+
+-- Insert pets
+INSERT INTO pets (pet_id, pet_name, species, breed, age, owner_id) 
+VALUES (1, 'Buddy', 'Dog', 'Golden Retriever', 3, 1);
+INSERT INTO pets (pet_id, pet_name, species, breed, age, owner_id) 
+VALUES (2, 'Mittens', 'Cat', 'Persian', 2, 2);
+
+-- Insert veterinarians
+INSERT INTO veterinarians (vet_id, first_name, last_name, specialization, phone_number) 
+VALUES (1, 'Dr. Alice', 'Johnson', 'General Practitioner', '1112233445');
+INSERT INTO veterinarians (vet_id, first_name, last_name, specialization, phone_number) 
+VALUES (2, 'Dr. Bob', 'Miller', 'Dermatology', '2233445566');
+
+-- Insert pet care activities
+INSERT INTO pet_care (care_id, pet_id, care_type, care_notes) 
+VALUES (1, 1, 'Feeding', 'Buddy had his morning meal of dry food.');
+INSERT INTO pet_care (care_id, pet_id, care_type, care_notes) 
+VALUES (2, 2, 'Grooming', 'Mittens was groomed today, fur trimmed and nails clipped.');
+
+-- Insert appointments
+INSERT INTO appointments (appointment_id, pet_id, vet_id, appointment_date, reason) 
+VALUES (1, 1, 1, TO_DATE('2025-01-10', 'YYYY-MM-DD'), 'Routine checkup');
+INSERT INTO appointments (appointment_id, pet_id, vet_id, appointment_date, reason) 
+VALUES (2, 2, 2, TO_DATE('2025-01-12', 'YYYY-MM-DD'), 'Skin irritation checkup');
+
+
+
+--Program For CREATE REST API IN PYTHON
+
+
+import json
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import mysql.connector
+from datetime import date, datetime
+from decimal import Decimal
+
+# Database configuration
+DB_CONFIG = {
+    "host": "localhost",  # Your database host
+    "user": "root",       # Your database username
+    "password": "root",   # Your database password
+    "database": "pethouse"  # Your database name
+}
+
+# Custom JSON Encoder to handle date and Decimal types
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (date, datetime)):
+            return obj.isoformat()  # Convert date/datetime to ISO format string
+        if isinstance(obj, Decimal):
+            return float(obj)  # Convert Decimal to float
+        return super().default(obj)
+
+# Function to get a database connection
+def get_db_connection():
+    return mysql.connector.connect(**DB_CONFIG)
+
+# Request handler for HTTP server
+class RequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        print("Request path:", self.path)
+
+        try:
+            # Establish DB connection
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            result = None  # Initialize result variable
+
+            if self.path.startswith("/owners/"):
+                # Fetch specific owner by ID
+                owner_id = self.path.split("/")[-1]
+                cursor.execute("SELECT * FROM owners WHERE owner_id = %s", (owner_id,))
+                result = cursor.fetchone()
+            elif self.path.startswith("/pets/"):
+                # Fetch specific pet by ID
+                pet_id = self.path.split("/")[-1]
+                cursor.execute("SELECT * FROM pets WHERE pet_id = %s", (pet_id,))
+                result = cursor.fetchone()
+            elif self.path.startswith("/appointments/"):
+                # Fetch specific appointment by ID
+                appointment_id = self.path.split("/")[-1]
+                cursor.execute("SELECT * FROM appointments WHERE appointment_id = %s", (appointment_id,))
+                result = cursor.fetchone()
+            elif self.path.startswith("/veterinarians/"):
+                # Fetch specific veterinarian by ID
+                vet_id = self.path.split("/")[-1]
+                cursor.execute("SELECT * FROM veterinarians WHERE vet_id = %s", (vet_id,))
+                result = cursor.fetchone()
+            elif self.path.startswith("/pet_care/"):
+                # Fetch pet care activity by ID
+                care_id = self.path.split("/")[-1]
+                cursor.execute("SELECT * FROM pet_care WHERE care_id = %s", (care_id,))
+                result = cursor.fetchone()
+            else:
+                # Fetch all data (for pets, owners, etc.)
+                if self.path == "/owners":
+                    cursor.execute("SELECT * FROM owners")
+                    result = cursor.fetchall()
+                elif self.path == "/pets":
+                    cursor.execute("SELECT * FROM pets")
+                    result = cursor.fetchall()
+                elif self.path == "/appointments":
+                    cursor.execute("SELECT * FROM appointments")
+                    result = cursor.fetchall()
+                elif self.path == "/veterinarians":
+                    cursor.execute("SELECT * FROM veterinarians")
+                    result = cursor.fetchall()
+                elif self.path == "/pet_care":
+                    cursor.execute("SELECT * FROM pet_care")
+                    result = cursor.fetchall()
+
+            if result is None:
+                # Return an error response if no results were found
+                self.send_response(404)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                error_message = {"error": "Resource not found"}
+                self.wfile.write(json.dumps(error_message).encode())
+                return
+
+            # Convert the result into a JSON response using the custom encoder
+            response_body = json.dumps(result, cls=CustomJSONEncoder)
+
+            # Send response headers and body
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(response_body.encode())  # Write JSON response
+
+        except Exception as e:
+            # Handle errors and send a 500 response
+            self.send_error(500, str(e))
+
+        finally:
+            # Ensure the cursor and connection are closed properly
+            cursor.close()
+            conn.close()
+
+# Function to run the HTTP server
+def run(server_class=HTTPServer, handler_class=RequestHandler, port=8080):
+    server_address = ("", port)
+    httpd = server_class(server_address, handler_class)
+    print(f"Server running on port {port}...")
+    httpd.serve_forever()
+
+# Start the server if this script is run
+if __name__ == "__main__":
+    run()
+
+
+
+
