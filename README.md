@@ -1,6 +1,6 @@
-# pet house management system
-# created by : Ketan Shinde
-# collage name : Amrutvahini collage of Engineering,Sangamner
+# Pet House Management System
+# Created By : Ketan Shinde
+# Collage Name : Amrutvahini Collage Of Engineering,Sangamner
 
 ## Discription
 
