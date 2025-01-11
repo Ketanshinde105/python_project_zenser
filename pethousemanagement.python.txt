@@ -97,10 +97,10 @@ from decimal import Decimal
 
 # Database configuration
 DB_CONFIG = {
-    "host": "localhost",  # Your database host
-    "user": "root",       # Your database username
-    "password": "root",   # Your database password
-    "database": "pethouse"  # Your database name
+    "host": "localhost",  
+    "user": "root",       
+    "password": "root",  
+    "database": "pethouse"  
 }
 
 # Custom JSON Encoder to handle date and Decimal types
